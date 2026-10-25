@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UGRP 연구 결과 — 영상 중심 정리</title>
+<!--
+  ============================================================================
+  페이지 구조 (2026-10-24 영상 중심 재제작)
+  ----------------------------------------------------------------------------
+  1차 섹션: 작업 흐름 4개 — ACT / 내비게이션 / 공동 운반 / L1
+    각 섹션 = 상태 카드 1개 + 영상 갤러리 (L1은 영상이 없어 상태 카드만)
+    새 영상이 나오면 해당 섹션의 .gallery 맨 앞에 figure를 추가하세요.
+    영상 파일은 ugrp-media/ 폴더에 두고, poster(정지 프레임 jpg)를 함께 넣으세요.
+  2차 섹션: 세션 타임라인 (최신순 카드)
+    세션이 끝나면 기존 양식대로 맨 위에 카드를 추가하세요.
+  수치는 현황판(STATUS.md)에 기록된 것만 사용합니다.
+  ============================================================================
+-->
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --card: #ffffff;
+    --text: #1c2330;
+    --muted: #5b6472;
+    --line: #dde1e8;
+    --accent: #2f5cff;
+    --done-bg: #e2f4e5;  --done-fg: #177245;
+    --prog-bg: #e3ecff;  --prog-fg: #2456c8;
+    --block-bg: #fde4e1; --block-fg: #b3261e;
+    --part-bg: #fdf3d7;  --part-fg: #8a6d00;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12151b;
+      --card: #1b1f28;
+      --text: #e8ebf1;
+      --muted: #9aa3b2;
+      --line: #2c323e;
+      --accent: #7ea2ff;
+      --done-bg: #14301f;  --done-fg: #5fd598;
+      --prog-bg: #1b2c52;  --prog-fg: #93b8ff;
+      --block-bg: #3d1a17; --block-fg: #ff9d94;
+      --part-bg: #3a2f10;  --part-fg: #ffd94d;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic",
+                 "Apple SD Gothic Neo", sans-serif;
+    line-height: 1.65;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 32px 18px 64px; }
+  header.page { margin-bottom: 22px; }
+  header.page h1 { font-size: 1.6rem; margin: 0 0 6px; }
+  header.page p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+  strong { font-weight: 700; }
+
+  /* 상단 요약 수치 */
+  .stats {
+    display: grid; gap: 12px; margin: 20px 0 34px;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  }
+  .stat {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 16px 18px;
+  }
+  .stat .num { font-size: 1.7rem; font-weight: 800; line-height: 1.2; }
+  .stat .num small { font-size: 1rem; font-weight: 600; color: var(--muted); }
+  .stat .label { color: var(--muted); font-size: 0.9rem; margin-top: 2px; }
+
+  /* 작업 흐름 섹션 */
+  section.flow { margin: 0 0 40px; }
+  section.flow > h2 {
+    font-size: 1.3rem; margin: 0 0 12px;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+  .status {
+    background: var(--card); border: 1px solid var(--line);
+    border-left: 4px solid var(--accent);
+    border-radius: 10px; padding: 14px 18px; margin-bottom: 16px;
+  }
+  .status.blocked { border-left-color: var(--block-fg); }
+  .status ul { margin: 4px 0; padding-left: 20px; }
+  .status li { margin: 3px 0; }
+  .status .st-title { font-weight: 700; margin-bottom: 2px; }
+
+  .gallery {
+    display: grid; gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+  figure.clip {
+    margin: 0; background: var(--card);
+    border: 1px solid var(--line); border-radius: 12px; overflow: hidden;
+  }
+  figure.clip.wide { grid-column: span 2; }
+  @media (max-width: 680px) { figure.clip.wide { grid-column: span 1; } }
+  figure.clip video { width: 100%; height: auto; display: block; background: #000; }
+  figure.clip figcaption { padding: 10px 14px 12px; font-size: 0.92rem; }
+  figure.clip figcaption .cap-title { font-weight: 700; display: block; margin-bottom: 2px; }
+  figure.clip figcaption .cap-desc { color: var(--muted); font-size: 0.88rem; }
+
+  .chip {
+    display: inline-block; font-size: 0.78rem; font-weight: 600;
+    padding: 2px 10px; border-radius: 999px; vertical-align: middle;
+  }
+  .chip-done    { background: var(--done-bg);  color: var(--done-fg); }
+  .chip-progress{ background: var(--prog-bg);  color: var(--prog-fg); }
+  .chip-blocked { background: var(--block-bg); color: var(--block-fg); }
+  .chip-part    { background: var(--part-bg);  color: var(--part-fg); }
+
+  /* 세션 타임라인 */
+  .timeline { position: relative; margin-top: 10px; }
+  .timeline::before {
+    content: ""; position: absolute;
+    left: 7px; top: 8px; bottom: 8px; width: 2px; background: var(--line);
+  }
+  article.session {
+    position: relative; background: var(--card);
+    border: 1px solid var(--line); border-radius: 12px;
+    padding: 16px 20px 10px; margin: 0 0 18px 28px;
+  }
+  article.session::before {
+    content: ""; position: absolute; left: -27px; top: 24px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--accent); border: 2px solid var(--bg);
+  }
+  article.session .meta {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 0.88rem; color: var(--muted);
+  }
+  article.session h3 { font-size: 1.08rem; margin: 5px 0 4px; }
+  article.session ul { margin: 4px 0 10px; padding-left: 20px; }
+  article.session li { margin: 3px 0; }
+  h2.divider { font-size: 1.3rem; margin: 38px 0 16px; }
+  footer.page { color: var(--muted); font-size: 0.85rem; margin-top: 10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="page">
+    <h1>UGRP 연구 결과</h1>
+    <p>멀티로봇 협업 연구(UGRP)의 작업 흐름별 영상 결과와 현재 상태입니다. 현황판 기록 기준 · 2026-10-19 ~ 2026-10-24</p>
+  </header>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="num">226<small> / 400건</small></div>
+      <div class="label">공동 운반 데이터 수집 채택 — 목표 200건 초과 달성</div>
+    </div>
+    <div class="stat">
+      <div class="num">12<small> / 20건</small></div>
+      <div class="label">검증 세트 채택 — 전 구간(B0~B5) 최소 건수 충족, 학습 진행 판정</div>
+    </div>
+    <div class="stat">
+      <div class="num">6<small> / 12</small></div>
+      <div class="label">ACT 시계 보정 평가(C2c) 보류 과제 성공 — 베이스라인 0/12에서 개선</div>
+    </div>
+    <div class="stat">
+      <div class="num">2/2 · 3/3</div>
+      <div class="label">내비게이션 게이트 참값 통과 · N1 반복 실행 통과</div>
+    </div>
+  </div>
+
+  <!-- ================= ACT ================= -->
+  <section class="flow" id="act">
+    <h2>ACT — 모방학습 정책 <span class="chip chip-done">P5 평가 완료</span></h2>
+    <div class="status">
+      <div class="st-title">현재 상태</div>
+      <ul>
+        <li>시계 보정 평가(C2c) <strong>통과</strong>: 보류 과제 <strong>6/12</strong> · 학습 과제 3/12 성공 (베이스라인 0/12). 재학습 없이 행동 시계만 바꿔 0 → 6/12로 개선됨을 확인</li>
+        <li>후속 학습(R1) 본학습 <strong>20,000스텝 완료</strong>: 오프라인 게이트의 전이 계측 오류를 바로잡아 재평가한 결과 보존 체크포인트 7개 중 6개 통과, <strong>step-007000 선택·동결</strong></li>
+        <li>P5 보류 평가(2026-10-25, 사전등록 동결 후 실행): 학습 정책 <strong>0/20</strong> — 접근 도달 10/20, 정렬·READY 도달 0, 전 에피소드 시간 초과 종료. 같은 seed의 교사(GT)는 <strong>19/20</strong>이라 과제 자체는 풀리는 구성. 판정은 <strong>파지 우선(GRASP_FIRST)</strong> — 다음 라운드는 접근·정렬·READY 구간 보강</li>
+      </ul>
+    </div>
+    <div class="gallery">
+      <figure class="clip">
+        <video controls preload="none" poster="ugrp-media/act-p5-student-8342000.jpg" src="ugrp-media/act-p5-student-8342000.mp4"></video>
+        <figcaption>
+          <span class="cap-title">P5 평가 — 학습 정책 (seed 8342000) <span class="chip chip-blocked">실패</span></span>
+          <span class="cap-desc">동결 모델 step-007000 · 외부 CCTV 시점 재생(기록된 궤적) · 접근까지 도달한 뒤 정렬·READY로 넘어가지 못해 시간 초과. 학생 전체 0/20</span>
+        </figcaption>
+      </figure>
+      <figure class="clip">
+        <video controls preload="none" poster="ugrp-media/act-p5-teacher-8342000.jpg" src="ugrp-media/act-p5-teacher-8342000.mp4"></video>
+        <figcaption>
+          <span class="cap-title">P5 평가 — 교사 기준 (같은 seed) <span class="chip chip-done">성공</span></span>
+          <span class="cap-desc">GT 교사 실행이라 학습 성과는 아님 · 같은 보류 seed에서 공동 운반 성공 — 과제가 풀리는 구성임을 보이는 대조군. 교사 전체 19/20</span>
+        </figcaption>
+      </figure>
+      <figure class="clip">
+        <video controls preload="none" poster="ugrp-media/act-c2c-ho4-88669-success.jpg" src="ugrp-media/act-c2c-ho4-88669-success.mp4"></video>
+        <figcaption>
+          <span class="cap-title">평가 과제 전체 성공 <span class="chip chip-done">성공</span></span>
+          <span class="cap-desc">시계 보정 정책의 보류 과제 실행 (그리퍼 카메라 시점). 이 평가 묶음에서 보류 과제 6/12 성공</span>
+        </figcaption>
+      </figure>
+      <figure class="clip">
+        <video controls preload="none" poster="ugrp-media/act-c2c-ho4-88670-success.jpg" src="ugrp-media/act-c2c-ho4-88670-success.mp4"></video>
+        <figcaption>
+          <span class="cap-title">후속 실행 과제 성공 (10초 클립) <span class="chip chip-done">성공</span></span>
+          <span class="cap-desc">다음 날 후속 실행에서 성공한 보류 과제의 요약 클립</span>
+        </figcaption>
+      </figure>
+      <figure class="clip">
+        <video controls preload="none" poster="ugrp-media/act-c2c-train4-88601-release-fail.jpg" src="ugrp-media/act-c2c-train4-88601-release-fail.mp4"></video>
+        <figcaption>
+          <span class="cap-title">들기는 성공, 내려놓기 실패 <span class="chip chip-part">부분 성공</span></span>
+          <span class="cap-desc">파지·들기·이동까지는 됐으나 내려놓기 단계에서 실패. 내려놓기 실패는 힘 상한에 걸린 것으로 분석됨</span>
+        </figcaption>
+      </figure>
+      <figure class="clip">
+        <video controls preload="none" poster="ugrp-media/act-b0-ho4-88669-fail.jpg" src="ugrp-media/act-b0-ho4-88669-fail.mp4"></video>
+        <figcaption>
+          <span class="cap-title">베이스라인 동일 과제 실패 <span class="chip chip-blocked">실패</span></span>
+          <span class="cap-desc">보정 없는 베이스라인 정책의 같은 과제 — 베이스라인은 0/12로, 보정판(6/12)과 대조됨</span>
+        </figcaption>
+      </figure>
+      <figure class="clip">
+        <video controls preload="none" poster="ugrp-media/act-r8-train4-failure-window.jpg" src="ugrp-media/act-r8-train4-failure-window.mp4"></video>
+        <figcaption>
+          <span class="cap-title">기존 정책 실패 구간 4분할 <span class="chip chip-blocked">실패</span></span>
+          <span class="cap-desc">기존 정책(R8)의 학습 과제 실패 구간을 4개 시점으로 나란히 본 진단 영상 (10.1초)</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ================= 내비게이션 ================= -->
+  <section class="flow" id="nav">
+    <h2>내비게이션 <span class="chip chip-progress">재보정 진행 중</span></h2>
+    <div class="status">
+      <div class="st-title">현재 상태</div>
+      <ul>
+        <li>게이트 통과: v230-r5에서 참값 <strong>2/2</strong> · 판정 일치 2/2 · 오검출 0, 반복 실행 N1은 <strong>3/3 통과</strong> (불일치·경계·접촉 0)</li>
+        <li>v5 재보정 1단계(렌더 스윕) 완료: 밴드 <strong>B0</strong> 선택 — 기존 밴드로 충분함이 실측으로 확정되어 변경 불필요</li>
+        <li>2단계 실행은 중계 서버(18627 포트) 무응답으로 보류 중 — 중계가 복구되면 이어서 실행 가능</li>
+      </ul>
+    </div>
+    <div class="gallery">
+      <figure class="clip wide">
+        <video controls preload="none" poster="ugrp-media/nav-v230-r5-pair-both.jpg" src="ugrp-media/nav-v230-r5-pair-both.mp4"></video>
+        <figcaption>
+          <span class="cap-title">로봇 2대 동시 주행 — 게이트 통과 실행 <span class="chip chip-done">통과</span></span>
+          <span class="cap-desc">두 로봇이 나란히 슬롯으로 진입하는 실행을 좌우 화면으로 재생 (1920×720, 40초). 참값 2/2 · 오검출 0으로 게이트 통과</span>
+        </figcaption>
+      </figure>
+      <figure class="clip">
+        <video controls preload="none" poster="ugrp-media/nav-v230-n1-s601-r1.jpg" src="ugrp-media/nav-v230-n1-s601-r1.mp4"></video>
+        <figcaption>
+          <span class="cap-title">반복성 검증 s601 · 로봇 1 <span class="chip chip-done">통과</span></span>
+          <span class="cap-desc">같은 조건 반복 실행(N1)의 증거 영상. 시드 3개 모두 3/3 통과, 접촉 0</span>
+        </figcaption>
+      </figure>
+      <figure class="clip">
+        <video controls preload="none" poster="ugrp-media/nav-v230-n1-s603-r2.jpg" src="ugrp-media/nav-v230-n1-s603-r2.mp4"></video>
+        <figcaption>
+          <span class="cap-title">반복성 검증 s603 · 로봇 2 <span class="chip chip-done">통과</span></span>
+          <span class="cap-desc">반복 실행에서 두 번째 로봇 시점. 조건을 바꿔도 판정이 흔들리지 않음을 확인</span>
+        </figcaption>
+      </figure>
+      <figure class="clip">
+        <video controls preload="none" poster="ugrp-media/nav-zone-b-calib-sweep.jpg" src="ugrp-media/nav-zone-b-calib-sweep.mp4"></video>
+        <figcaption>
+          <span class="cap-title">목표 구역 검출 보정 스윕</span>
+          <span class="cap-desc">자세를 바꿔가며 목표 구역(zone B) 검출 조건을 맞추는 보정 렌더</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ================= 공동 운반 ================= -->
+  <section class="flow" id="carry">
+    <h2>공동 운반 <span class="chip chip-done">수집 완료</span></h2>
+    <div class="status">
+      <div class="st-title">현재 상태</div>
+      <ul>
+        <li>교사 정책 데이터 수집 <strong>완료</strong>: 시도 400건 · 물리 성공 226건 · <strong>채택 226건</strong>으로 목표 200건 초과, 검증도 통과해 학습 단계로 넘어간 상태</li>
+        <li>평가 사전등록 확정: 보류 시드 20 유지 · 에피소드 상한 170초 · 조건 A · 단일 버전 등록, 관련 테스트 <strong>107개 통과</strong></li>
+        <li>구간별 수율 편차가 큼: B1 구간 34.7%로 최저 — 파지 단계 시간 소진과 서쪽 경로 막힘이 겹친 구간</li>
+      </ul>
+    </div>
+    <div class="gallery">
+      <figure class="clip">
+        <video controls preload="none" poster="ugrp-media/carry-teacher-world17.jpg" src="ugrp-media/carry-teacher-world17.mp4"></video>
+        <figcaption>
+          <span class="cap-title">교사 정책 공동 운반 — 월드 17 <span class="chip chip-done">성공</span></span>
+          <span class="cap-desc">두 로봇이 긴 물체(빔)를 함께 들어 문을 통과해 목표 구역까지 운반 — 운반 거리 <strong>4.42m</strong> (영상 자체 표기 기준). 수집된 학습 데이터가 어떤 움직임인지 보여주는 확인용 재생으로, 이 렌더 자체는 학습 데이터 아님</span>
+        </figcaption>
+      </figure>
+      <figure class="clip">
+        <video controls preload="none" poster="ugrp-media/carry-teacher-world11.jpg" src="ugrp-media/carry-teacher-world11.mp4"></video>
+        <figcaption>
+          <span class="cap-title">교사 정책 공동 운반 — 월드 11 <span class="chip chip-done">성공</span></span>
+          <span class="cap-desc">배치가 다른 월드에서의 공동 운반 — 운반 거리 <strong>3.88m</strong> (영상 자체 표기 기준). 월드 11·17은 운반 경로 비교 대상으로 기록됨</span>
+        </figcaption>
+      </figure>
+      <figure class="clip">
+        <video controls preload="none" poster="ugrp-media/carry-teacher-world1.jpg" src="ugrp-media/carry-teacher-world1.mp4"></video>
+        <figcaption>
+          <span class="cap-title">교사 정책 공동 운반 — 월드 1 <span class="chip chip-blocked">실패</span></span>
+          <span class="cap-desc">문을 통과하지 못해 운반이 성립하지 않은 교사 실패 사례 (영상 자체 표기: not_through_door). 성공 사례와 함께 실패 양상도 기록해 둔 경우</span>
+        </figcaption>
+      </figure>
+      <figure class="clip">
+        <video controls preload="none" poster="ugrp-media/carry-e2ewarp-6view-peer-en.jpg" src="ugrp-media/carry-e2ewarp-6view-peer-en.mp4"></video>
+        <figcaption>
+          <span class="cap-title">종단간(E2E) 공동 운반 — 6개 시점 동시 재생</span>
+          <span class="cap-desc">로봇 3대의 각자 카메라 × 월드 2개를 한 화면에 모은 E2E 재생 (영어 동료 대화 조건 peer_en, smoke 실행 · 30.5초)</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ================= L1 ================= -->
+  <section class="flow" id="l1">
+    <h2>L1 — 통신 조건 비교 실험 <span class="chip chip-blocked">차단</span></h2>
+    <div class="status blocked">
+      <div class="st-title">현재 상태 — 아직 실험 영상이 없습니다</div>
+      <ul>
+        <li>구현과 단위 테스트는 완료: 관련 테스트 <strong>51/51 통과</strong>, 사전등록 초안은 검토 대기(READY_FOR_REVIEW) 상태</li>
+        <li>예비 실행(smoke)이 <strong>0/8로 차단</strong>됨: 실행 환경과 호스트를 잇는 중계(relay) 18627 포트에 리스너가 없어 연결 자체가 성립하지 않음 — 호스트→VM 역방향 터널을 먼저 복구해야 함</li>
+        <li>그래서 본실험은 아직 한 번도 실행되지 않았고, 이 섹션에는 올릴 영상이 없습니다. 터널이 복구되면 예비 실행부터 이어집니다</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ================= 세션 타임라인 ================= -->
+  <h2 class="divider">세션 타임라인</h2>
+  <div class="timeline">
+
+    <article class="session">
+      <div class="meta">
+        <time datetime="2026-10-24">2026-10-24</time>
+        <span class="chip chip-progress">진행 중</span>
+      </div>
+      <h3>유료 재개 — ACT 학습 재개 착수와 내비게이션 재보정</h3>
+      <ul>
+        <li>수집 최종 확정(시도 400 · 채택 226)과 검증 통과를 재확인하고 학습 재개에 착수</li>
+        <li>학습 시험 실행 실패 원인을 규명: 변환 데이터에 파지 완료 양성이 0건인 구조적 문제 — 라벨 도출 방식을 바꿔 데이터셋 재구축 중</li>
+        <li>내비게이션 재보정 1단계 완료(밴드 B0), 2단계는 중계 서버 무응답으로 보류</li>
+        <li>다음: 데이터셋 재구축 → 사후 검증 → 시험 실행 300스텝 → 본학습 20,000스텝</li>
+      </ul>
+    </article>
+
+    <article class="session">
+      <div class="meta">
+        <time datetime="2026-10-22">2026-10-22</time>
+        <span class="chip chip-done">완료</span>
+      </div>
+      <h3>협업 운반 데이터 수집 실행과 평가 사전등록 확정</h3>
+      <ul>
+        <li>사전 검증(프로브) 20건 중 물리 성공 18건 · 운반 성공 14건으로 실행 구성을 동결</li>
+        <li>동시 수집이 격리 조건과 충돌해 순차 방식(K=3)으로 전환, 배치 10개 수집 — 당일 실측 시도 200 · 채택 109(54.5%), 최종 원장 기준 채택 226으로 목표 초과</li>
+        <li>평가 사전등록의 미결 결정 5건 확정, 관련 테스트 107개 통과</li>
+      </ul>
+    </article>
+
+    <article class="session">
+      <div class="meta">
+        <time datetime="2026-10-21">2026-10-21</time>
+        <span class="chip chip-done">완료</span>
+      </div>
+      <h3>수집 사전등록 강화와 양쪽 VM 병렬 가동</h3>
+      <ul>
+        <li>디스크 99% 상황에서 산출물 1.36GB를 회수·해시 대조한 뒤 캐시만 정리하고 재실행</li>
+        <li>정적 검사 완료: 제외 0/40, 유효 케이스 40건으로 사전등록 값 산출</li>
+        <li>파일럿 0/40 미실행, L1 예비 실행 0/8 차단(중계 터널 부재)이 과제로 남음</li>
+      </ul>
+    </article>
+
+    <article class="session">
+      <div class="meta">
+        <time datetime="2026-10-20">2026-10-20</time>
+        <span class="chip chip-done">완료</span>
+      </div>
+      <h3>인과 진단 실험(C4)과 내비게이션 게이트 통과</h3>
+      <ul>
+        <li>C4 전수 대조 1,520/1,520 일치 — 학생 정책 거동의 단일 입력 원인은 '발행된 명령 이력'으로 확정, 재학습 불필요</li>
+        <li>시계 보정 평가(C2c) 통과: 보류 과제 6/12 (베이스라인 0/12)</li>
+        <li>내비게이션 게이트 통과: 참값 2/2, N1 반복 3/3. 내려놓기 사전 게이트(C3b)는 근거 불충분으로 진행 불가 판정</li>
+      </ul>
+    </article>
+
+    <article class="session">
+      <div class="meta">
+        <time datetime="2026-10-19">2026-10-19 (저녁)</time>
+        <span class="chip chip-done">완료</span>
+      </div>
+      <h3>가설 검증 E0/E1과 ACT·내비게이션 집중 평가</h3>
+      <ul>
+        <li>E0: 행동 시계 가설 지지 — 보정 재계산 시 변화 0/72,572행이라 재학습 불필요로 판정</li>
+        <li>E1: 같은 가설이 모델 수준에서는 기각 — 완료 판정 자체가 병목임을 확인, 후속 실험 E2 취소</li>
+        <li>내비게이션 r4: 슬롯 접촉 0건을 달성했으나 문틀 판정 문제로 게이트 실패</li>
+      </ul>
+    </article>
+
+    <article class="session">
+      <div class="meta">
+        <time datetime="2026-10-19">2026-10-19 (오전)</time>
+        <span class="chip chip-done">완료</span>
+      </div>
+      <h3>병렬 운영 전환과 재현 감사</h3>
+      <ul>
+        <li>단일 큐 직렬 처리를 중단하고 에이전트별 리드 + 병렬 워커 운영으로 전환</li>
+        <li>통합 변경안 CI 33/33 통과 후 병합, 본류(main)는 불변 유지</li>
+        <li>재현 감사에서 원본과 새 실행의 불일치 확인(들기 성공 2/4 → 4/4) — 재현 기준 정립이 필요해짐</li>
+      </ul>
+    </article>
+
+  </div>
+
+  <footer class="page">
+    <p>자료원: 오라클 서버 UGRP 현황판(STATUS.md)과 실행 산출물. 영상은 서버 원본의 복사본이며, 성공·실패 표기는 현황판 기록과 파일 근거가 있는 경우에만 붙였습니다. 강의 노트 파이프라인 기록은 이 페이지의 범위가 아니라 포함하지 않았습니다.</p>
+  </footer>
+</div>
+</body>
+</html>
