@@ -167,16 +167,30 @@
 
   <!-- ================= ACT ================= -->
   <section class="flow" id="act">
-    <h2>ACT — 모방학습 정책 <span class="chip chip-progress">학습 재개 중</span></h2>
+    <h2>ACT — 모방학습 정책 <span class="chip chip-done">P5 평가 완료</span></h2>
     <div class="status">
       <div class="st-title">현재 상태</div>
       <ul>
         <li>시계 보정 평가(C2c) <strong>통과</strong>: 보류 과제 <strong>6/12</strong> · 학습 과제 3/12 성공 (베이스라인 0/12). 재학습 없이 행동 시계만 바꿔 0 → 6/12로 개선됨을 확인</li>
-        <li>후속 학습(R1)은 데이터셋을 다시 구축하는 중: 첫 시험 실행이 완료 라벨 부재로 실패했고, 라벨 도출 방식을 바꿔 재구축 → 사후 검증 → 시험 실행 300스텝 → 본학습 <strong>20,000스텝</strong> 순서</li>
-        <li>남은 병목: 완료 판정 자체가 약함(전이 구간 완료 확률 최대 0.0020), 내려놓기 실패는 시간 부족이 아니라 힘 상한(4.5–5.0N) 문제로 분석됨</li>
+        <li>후속 학습(R1) 본학습 <strong>20,000스텝 완료</strong>: 오프라인 게이트의 전이 계측 오류를 바로잡아 재평가한 결과 보존 체크포인트 7개 중 6개 통과, <strong>step-007000 선택·동결</strong></li>
+        <li>P5 보류 평가(2026-10-25, 사전등록 동결 후 실행): 학습 정책 <strong>0/20</strong> — 접근 도달 10/20, 정렬·READY 도달 0, 전 에피소드 시간 초과 종료. 같은 seed의 교사(GT)는 <strong>19/20</strong>이라 과제 자체는 풀리는 구성. 판정은 <strong>파지 우선(GRASP_FIRST)</strong> — 다음 라운드는 접근·정렬·READY 구간 보강</li>
       </ul>
     </div>
     <div class="gallery">
+      <figure class="clip">
+        <video controls preload="none" poster="ugrp-media/act-p5-student-8342000.jpg" src="ugrp-media/act-p5-student-8342000.mp4"></video>
+        <figcaption>
+          <span class="cap-title">P5 평가 — 학습 정책 (seed 8342000) <span class="chip chip-blocked">실패</span></span>
+          <span class="cap-desc">동결 모델 step-007000 · 외부 CCTV 시점 재생(기록된 궤적) · 접근까지 도달한 뒤 정렬·READY로 넘어가지 못해 시간 초과. 학생 전체 0/20</span>
+        </figcaption>
+      </figure>
+      <figure class="clip">
+        <video controls preload="none" poster="ugrp-media/act-p5-teacher-8342000.jpg" src="ugrp-media/act-p5-teacher-8342000.mp4"></video>
+        <figcaption>
+          <span class="cap-title">P5 평가 — 교사 기준 (같은 seed) <span class="chip chip-done">성공</span></span>
+          <span class="cap-desc">GT 교사 실행이라 학습 성과는 아님 · 같은 보류 seed에서 공동 운반 성공 — 과제가 풀리는 구성임을 보이는 대조군. 교사 전체 19/20</span>
+        </figcaption>
+      </figure>
       <figure class="clip">
         <video controls preload="none" poster="ugrp-media/act-c2c-ho4-88669-success.jpg" src="ugrp-media/act-c2c-ho4-88669-success.mp4"></video>
         <figcaption>
